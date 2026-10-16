@@ -77,7 +77,7 @@ void Pot_Init(ADC_HandleTypeDef *hadc)
     pot_index = 0U;
 }
 
-/* 从 DMA 缓冲读取最新值并做 8 点滑动平均 */
+/* 从 DMA 缓冲读取最新值并做 16 点滑动平均 */
 void Pot_ReadAll(Pot_Data_t *data)
 {
     uint16_t v;

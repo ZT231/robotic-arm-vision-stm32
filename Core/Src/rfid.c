@@ -163,9 +163,9 @@ static uint8_t rc522_com_mf522(uint8_t cmd, const uint8_t *in, uint8_t inLen,
         rc522_set_bits(RC522_BITFRAMING, 0x80U);    /* StartSend */
     }
 
-    /* 等待循环次数：硬件SPI每次读约7µs，3000次≈20ms，
-     * 远大于应答窗口3.2ms → 定时器中断必定先到；
-     * 之前1000次≈8ms < 窗口12.5ms 是 REQA 一直 Irq=00 的根因 */
+    /* 等待循环次数：软件 SPI 单次寄存器读（16 个时钟）约十几µs，
+     * 3000 次循环耗时远超 20ms，远大于应答窗口3.2ms → 定时器中断必定先到；
+     * 之前1000次循环短于窗口12.5ms 是 REQA 一直 Irq=00 的根因 */
     cnt = 3000U;
     n = 0U;
     do
@@ -338,9 +338,9 @@ HAL_StatusTypeDef RFID_Init(void)
     /* 应答窗口定时器（根因修复）：
      * 窗口 = (TPrescaler+1)*(TReload+1)/13.56MHz。
      * 之前 TReload=0x03E8 → 窗口≈12.5ms，比 rc522_com_mf522 的等待循环
-     * （1000次 × 硬件SPI每次读≈8µs ≈ 8ms）还长，循环先耗尽 → 永远 Irq=00。
+     * （1000次 × 软件SPI每次读十余µs ≈ 十几ms）还长，循环先耗尽 → 永远 Irq=00。
      * 现改为 TPrescaler=0xA9 + TReload=0x00FA → 窗口≈3.2ms，
-     * 远小于 3000 次循环(≈20ms)，保证定时器中断先到：
+     * 远小于 3000 次循环耗时，保证定时器中断先到：
      *   有卡 → RxI 置位(≈1ms)；无卡 → TimerI 置位(≈3.2ms) */
     rc522_apply_config();
 
